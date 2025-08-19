@@ -153,5 +153,77 @@ if (-not $Results -or $Results.Count -eq 0) {
     Write-Host "[!] No matching ACEs found" -ForegroundColor Yellow
     return
 }
+function Get-ForeignGroupMembership {
+    param([string]$Domain)
+
+    # 1) Try with FQDN
+    try { $r1 = Get-DomainForeignUser -Domain $Domain -ErrorAction Stop } catch { $r1 = @() }
+    if ($r1 -and $r1.Count -gt 0) { return $r1 }
+
+    # 2) Try with no -Domain (PowerView auto-context)
+    try { $r2 = Get-DomainForeignUser -ErrorAction Stop } catch { $r2 = @() }
+    if ($r2 -and $r2.Count -gt 0) { return $r2 }
+
+    # 3) Try with NetBIOS
+    $netbios = ($Domain -split '\.')[0].ToUpper()
+    try { $r3 = Get-DomainForeignUser -Domain $netbios -ErrorAction Stop } catch { $r3 = @() }
+    if ($r3 -and $r3.Count -gt 0) { return $r3 }
+
+    # 4) Manual fallback: enumerate groups in $Domain and flag members whose DN domain != $Domain
+    $out = @()
+    try { $groups = Get-DomainGroup -Domain $Domain -LDAPFilter '(member=*)' -ErrorAction Stop } catch { $groups = @() }
+    foreach ($g in $groups) {
+        if (-not $g.member) { continue }
+        $gName = if ($g.samaccountname) { $g.samaccountname } else { $g.cn }
+        foreach ($memDN in @($g.member)) {
+            $dcs = [regex]::Matches($memDN,'DC=([^,]+)') | ForEach-Object { $_.Groups[1].Value }
+            if ($dcs.Count -eq 0) { continue }
+            $memDom = ($dcs -join '.').ToUpper()
+            if ($memDom -ne $Domain.ToUpper()) {
+                $uCN = ([regex]::Match($memDN,'CN=([^,]+)')).Groups[1].Value
+                if (-not $uCN) { $uCN = $memDN }
+                $out += [pscustomobject]@{
+                    UserDomain = $memDom
+                    UserName   = $uCN
+                    GroupDomain= $Domain.ToUpper()
+                    GroupName  = $gName
+                }
+            }
+        }
+    }
+    return $out
+}
+
+$fgm = Get-ForeignGroupMembership -Domain $Domain
+
+if ($fgm -and $fgm.Count -gt 0) {
+    Write-Host ""
+    Write-Host "=== FOREIGN GROUP MEMBERSHIP ===" -ForegroundColor Cyan
+    foreach ($row in $fgm) {
+        $uDom  = $row.UserDomain
+        $uName = $row.UserName
+        $gDom  = $row.GroupDomain
+        $gName = $row.GroupName
+
+        $abuse = @()
+        if ($gName -match 'Domain Admins|Enterprise Admins|Administrators|Account Operators|Server Admins|Infrastructure|Schema Admins|Inlanefreight_admins|Inlanefreight_admins_bak') {
+            $abuse += "[ABUSE] Leverage group privileges in ${gDom}:"
+            $abuse += "  net group `"$gName`" /domain"
+            $abuse += "  (add/remove members, reset passwords, pivot as allowed)"
+        } else {
+            $abuse += "[ABUSE] Member of ${gDom}\${gName} — enumerate effective privileges:"
+            $abuse += "  net group `"$gName`" /domain"
+        }
+
+        Write-Host ("[FOREIGN] ${uDom}\${uName}  ->  ${gDom}\${gName}") -ForegroundColor Magenta
+        foreach ($line in $abuse) {
+            if ($line -like "[ABUSE]*") { Write-Host "  $line" -ForegroundColor Yellow }
+            else { Write-Host "  $line" -ForegroundColor DarkYellow }
+        }
+    }
+} else {
+    Write-Host ""
+    Write-Host "=== FOREIGN GROUP MEMBERSHIP === none found" -ForegroundColor DarkGray
+}
 
 foreach ($r in $Results) { Write-AclHit -R $r -Domain $Domain }
