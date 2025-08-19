@@ -153,6 +153,7 @@ if (-not $Results -or $Results.Count -eq 0) {
     Write-Host "[!] No matching ACEs found" -ForegroundColor Yellow
     return
 }
+
 function Get-ForeignGroupMembership {
     param([string]$Domain)
 
@@ -208,11 +209,11 @@ if ($fgm -and $fgm.Count -gt 0) {
         $abuse = @()
         if ($gName -match 'Domain Admins|Enterprise Admins|Administrators|Account Operators|Server Admins|Infrastructure|Schema Admins|Inlanefreight_admins|Inlanefreight_admins_bak') {
             $abuse += "[ABUSE] Leverage group privileges in ${gDom}:"
-            $abuse += "  net group `"$gName`" /domain"
-            $abuse += "  (add/remove members, reset passwords, pivot as allowed)"
+            $abuse += "  Get-DomainGroup -Identity '$gName' -Domain $gDom | select memberof "
+            $abuse += "  (enumerate rights, add/remove members, reset passwords, pivot)"
         } else {
-            $abuse += "[ABUSE] Member of ${gDom}\${gName} — enumerate effective privileges:"
-            $abuse += "  net group `"$gName`" /domain"
+            $abuse += "[ABUSE] Member of ${gDom}\${gName} — enumerate privileges:"
+            $abuse += "  Get-DomainGroup -Identity '$gName' -Domain $gDom | select memberof "
         }
 
         Write-Host ("[FOREIGN] ${uDom}\${uName}  ->  ${gDom}\${gName}") -ForegroundColor Magenta
