@@ -8,3 +8,10 @@ PowerShell scripts to help with enumerating and abusing common misconfigurations
 ```
 <img width="1362" height="210" alt="image" src="https://github.com/user-attachments/assets/b0cd0503-73a4-4eef-af4d-241fbc3a733f" />
 
+## Child to Parent Domain Elevation
+
+```
+1. Assumes mimikatz and powerview loaded into memory
+2. Bi-directional trust
+```
+<img width="785" height="386" alt="image" src="https://github.com/user-attachments/assets/2a869042-227a-411f-a503-67c8ea6af345" />
