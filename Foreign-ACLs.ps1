@@ -212,12 +212,10 @@ if ($fgm -and $fgm.Count -gt 0) {
             $abuse += "  Get-DomainGroup -Identity '$gName' -Domain $gDom | select memberof "
             $abuse += "  (enumerate rights, add/remove members, reset passwords, pivot)"
         } else {
-            # FIX: replace em dash & make it robust with -f formatting
             $abuse += ("[ABUSE] Member of {0}\{1} - enumerate privileges:" -f $gDom, $gName)
             $abuse += "  Get-DomainGroup -Identity '$gName' -Domain $gDom | select memberof "
         }
 
-        # FIX: avoid interpolation ambiguity with -f formatting
         Write-Host ("[FOREIGN] {0}\{1}  ->  {2}\{3}" -f $uDom, $uName, $gDom, $gName) -ForegroundColor Magenta
         foreach ($line in $abuse) {
             if ($line -like "[ABUSE]*") { Write-Host "  $line" -ForegroundColor Yellow }
