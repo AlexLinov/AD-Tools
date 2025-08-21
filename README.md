@@ -15,3 +15,11 @@ PowerShell scripts to help with enumerating and abusing common misconfigurations
 2. Bi-directional trust
 ```
 <img width="785" height="386" alt="image" src="https://github.com/user-attachments/assets/2a869042-227a-411f-a503-67c8ea6af345" />
+
+
+## Enumerate Foreign Security Principals
+
+```
+1. PowerView
+```
+<img width="955" height="216" alt="image" src="https://github.com/user-attachments/assets/aca0b7ed-fe17-4f4d-be49-c7d0840d70b3" />
