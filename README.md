@@ -1,5 +1,5 @@
 # AD-Tools
-PowerShell scripts to help with enumerating and abusing common misconfigurations. Inspired by HTB CAPE Path
+Scripts to help with enumerating and abusing common misconfigurations. Inspired by HTB CAPE Path
 
 ## Enumerate Foreign-ACLs
 ```
